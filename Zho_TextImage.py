@@ -215,7 +215,9 @@ class Text_Image_Zho:
     
     def draw_text_in_arc(self, image, draw, text, font, font_path, font_size, center, radius, start_angle, end_angle, fill='black', stroke_fill='blue', stroke_width=0):
         # 文字的总长度
-        text_width = sum(font.getsize(char)[0] for char in text[:-1])
+        # 文字的总长度
+        text_width = sum((font.getbbox(char)[2] - font.getbbox(char)[0]) for char in text[:-1])
+
 
         # 根据扇形角度计算角度步长
         angle_range = end_angle - start_angle
@@ -224,9 +226,10 @@ class Text_Image_Zho:
         # 开始绘制文字
         current_angle = start_angle
         for char in text:
-            char_width, char_height = font.getsize(char)
+            char_bbox = font.getbbox(char)
+            char_width = char_bbox[2] - char_bbox[0]
+            char_height = char_bbox[3] - char_bbox[1]
             angle = math.radians(current_angle)
-            print(current_angle, angle, angle_step)
 
             # 创建单独的图像用于旋转字符
             super_sampling_multiplier = 10
@@ -240,7 +243,7 @@ class Text_Image_Zho:
             rotated_char_image = char_image.rotate(rotate_angle, expand=1, resample=Image.BICUBIC)
             # 缩小图像大小
             new_size = (int(rotated_char_image.width / 10), int(rotated_char_image.height / 10))
-            rotated_char_image_resized = rotated_char_image.resize(new_size, Image.ANTIALIAS)
+            rotated_char_image_resized = rotated_char_image.resize(new_size, Image.Resampling.LANCZOS)
 
             # 计算缩小后的图像放置位置
             x = center[0] + radius * math.cos(angle) - rotated_char_image_resized.size[0] / 2
